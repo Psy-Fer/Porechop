@@ -1,3 +1,18 @@
+A fork of the main project (which is awesome!)
+
+I added the ability to define your own adapters.py in the commandline.
+
+-AP is the path
+-AN is the name of the file without the .py
+
+I got a bit lazy, but it does the trick.
+
+./porechop-runner.py -i test/test_format_barcodes.fasta.gz -b test/ -AP ./alt_adapters.py -AN alt_adapters
+
+
+
+
+
 <p align="center"><img src="misc/porechop_logo_knife.png" alt="Porechop" width="600"></p>
 
 Porechop is a tool for finding and removing adapters from [Oxford Nanopore](https://nanoporetech.com/) reads. Adapters on the ends of reads are trimmed off, and when a read has an adapter in its middle, it is treated as chimeric and chopped into separate reads. Porechop performs thorough alignments to effectively find adapters, even at low sequence identity.
