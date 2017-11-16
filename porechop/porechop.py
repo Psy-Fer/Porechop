@@ -24,13 +24,23 @@ import re
 from multiprocessing.dummy import Pool as ThreadPool
 from collections import defaultdict
 from .misc import load_fasta_or_fastq, print_table, red, bold_underline, MyHelpFormatter, int_to_str
-from .adapters import ADAPTERS, make_full_native_barcode_adapter, make_full_rapid_barcode_adapter
+# Add this as default, for now, just make user be explicit
+#from .adapters import ADAPTERS, make_full_native_barcode_adapter, make_full_rapid_barcode_adapter
 from .nanopore_read import NanoporeRead
 from .version import __version__
-
+import importlib
+import importlib.util
 
 def main():
     args = get_arguments()
+    PATH = args.adapt_path
+    blah = args.adapt_name
+    print(blah)
+    spec = importlib.util.spec_from_file_location(blah, PATH)
+    global adapter_mod
+    adapter_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(adapter_mod)
+    
     reads, check_reads, read_type = load_reads(args.input, args.verbosity, args.print_dest,
                                                args.check_reads)
 
@@ -114,6 +124,12 @@ def get_arguments():
                                help='Reads will be binned based on their barcode and saved to '
                                     'separate files in this directory (incompatible with '
                                     '--output)')
+    barcode_group.add_argument('-AP', '--adapt_path',
+                               help='Path of the adapter file that should be used which contaiins '
+                                    'the barcodes to be found. (Default is .adapter)')
+    barcode_group.add_argument('-AN', '--adapt_name', default='adapters',
+                               help='name of the adapter file without extention. '
+                                    '(Default is adapter)')
     barcode_group.add_argument('--barcode_threshold', type=float, default=75.0,
                                help='A read must have at least this percent identity to a barcode '
                                     'to be binned')
@@ -286,7 +302,7 @@ def find_matching_adapter_sets(check_reads, verbosity, end_size, scoring_scheme_
         print(bold_underline('Looking for known adapter sets'), flush=True, file=print_dest)
         output_progress_line(0, read_count, print_dest)
 
-    search_adapters = [a for a in ADAPTERS if '(full sequence)' not in a.name]
+    search_adapters = [a for a in adapter_mod.ADAPTERS if '(full sequence)' not in a.name]
     search_adapter_count = len(search_adapters)
 
     # If single-threaded, do the work in a simple loop.
@@ -381,7 +397,7 @@ def display_adapter_set_results(matching_sets, verbosity, print_dest):
     table = [['Set', 'Best read start %ID', 'Best read end %ID']]
     row_colours = {}
     matching_set_names = [x.name for x in matching_sets]
-    search_adapters = [a for a in ADAPTERS if '(full sequence)' not in a.name]
+    search_adapters = [a for a in adapter_mod.ADAPTERS if '(full sequence)' not in a.name]
     for adapter_set in search_adapters:
         start_score = '%.1f' % adapter_set.best_start_score
         end_score = '%.1f' % adapter_set.best_end_score
@@ -407,12 +423,12 @@ def add_full_barcode_adapter_sets(matching_sets):
         # Native barcode full sequences
         if all(x in matching_set_names
                for x in ['SQK-NSK007', 'Barcode ' + str(i) + ' (reverse)']):
-            matching_sets.append(make_full_native_barcode_adapter(i))
+            matching_sets.append(adapter_mod.make_full_native_barcode_adapter(i))
 
         # Rapid barcode full sequences
         if all(x in matching_set_names
                for x in ['SQK-NSK007', 'Rapid', 'Barcode ' + str(i) + ' (forward)']):
-            matching_sets.append(make_full_rapid_barcode_adapter(i))
+            matching_sets.append(adapter_mod.make_full_rapid_barcode_adapter(i))
 
     return matching_sets
 
