@@ -2,6 +2,8 @@ A fork of the main project (which is awesome!)
 
 I added the ability to define your own adapters.py in the commandline.
 
+Be sure to be using latest python3, 3.6.3+
+
 -AP is the path
 -AN is the name of the file without the .py
 
