@@ -10,6 +10,7 @@ I got a bit lazy, but it does the trick.
 ./porechop-runner.py -i test/test_format_barcodes.fasta.gz -b test/ -AP ./alt_adapters.py -AN alt_adapters
 
 
+============================================================
 
 
 
